@@ -1,0 +1,14 @@
+# Large dataset — keep local, do not upload
+dataset/*.csv
+
+# Jupyter temporary checkpoint files
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Virtual environments
+venv/
+.venv/
