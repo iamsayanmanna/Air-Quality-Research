@@ -33,7 +33,7 @@ Rather than evaluating models only through overall performance, this study place
 - Implement and compare deep learning architectures for time-series prediction.
 - Evaluate model performance using appropriate regression metrics.
 - Investigate model behaviour during extreme pollution episodes.
-- Quantify performance differences between overall test observations and extreme-pollution observations.
+- Compare overall test performance with performance on extreme-pollution observations.
 - Identify the strengths and limitations of different model architectures.
 
 ## 🔬 Research Design
@@ -46,7 +46,7 @@ The workflow follows a structured, time-aware experimental approach:
 4. **Model Development** — train machine learning and deep learning models.
 5. **Overall Evaluation** — assess predictions on the chronological test set.
 6. **Extreme-Event Evaluation** — evaluate predictions for observations meeting the predefined extreme-pollution threshold.
-7. **Comparative Analysis** — compare overall performance, extreme-event errors, and performance degradation across models.
+7. **Comparative Analysis** — compare overall metrics, extreme-event errors, and the change in error metrics across evaluation subsets.
 
 ## 📂 Project Structure
 
@@ -76,7 +76,7 @@ Air-Quality-Research/
 |---|---|
 | [01 — Exploratory Data Analysis](notebooks/01_EDA_Air_Quality.ipynb) | Data exploration, quality checks, statistical summaries, and visual analysis |
 | [02 — Machine Learning](notebooks/02_Machine_Learning_Air_Quality.ipynb) | Machine learning experiments and model evaluation |
-| [03 — Deep Learning](notebooks/03_Deep_Learning_Air_Quality.ipynb) | Deep learning architectures, time-series sequences, and robustness analysis |
+| [03 — Deep Learning](notebooks/03_Deep_Learning_Air_Quality.ipynb) | MLP, RNN, GRU, and Transformer experiments, evaluation, robustness analysis, and visualizations |
 
 Open the notebooks above to explore the code, analysis, experiments, and recorded outputs.
 
@@ -86,7 +86,7 @@ Open the notebooks above to explore the code, analysis, experiments, and recorde
 
 The local dataset used in the experiments is named `INDIA_AQI_COMPLETE_20251126.csv`.
 
-The research workflow uses air-quality observations from multiple Indian cities. The working dataset contains approximately **842,160 rows across 71 columns**, covering 29 cities and the period 2022–2025.
+The working dataset contains approximately **842,160 rows across 71 columns**, covering 29 cities and the period 2022–2025.
 
 The dataset is not included in this GitHub repository because the local CSV is approximately 282.6 MB. Please obtain the data from the original Kaggle source and comply with its applicable access and licensing terms.
 
@@ -105,23 +105,26 @@ dataset/INDIA_AQI_COMPLETE_20251126.csv
 | Geographic coverage | 29 Indian cities |
 | Time period | 2022–2025 |
 | Data split | Chronological 80% training / 20% testing |
-| Time-series sequence length | 24 |
+| Time-series lookback window | 24 time steps |
 | Input features for deep learning | 14 |
-| Deep learning model parameter budget | 59,915 parameters per architecture |
+| Parameters per deep learning model | 76,601 |
 | Maximum training epochs | 20 |
 | Batch size | 512 |
+| Validation split | 10% of the training sequences |
 | Early stopping patience | 5 epochs |
 | Optimizer | Adam |
+| Learning rate | 0.001 |
 | Loss function | Mean Squared Error (MSE) |
+| Random seed | 42 |
 
-The deep learning experiments compare four architectures under a matched parameter budget:
+The deep learning experiments compare four architectures with the same parameter count:
 
 - **MLP** — Multilayer Perceptron
-- **RNN** — Recurrent Neural Network
+- **RNN** — Simple Recurrent Neural Network
 - **GRU** — Gated Recurrent Unit
 - **Transformer** — Attention-based sequence model
 
-A matched parameter count provides a more controlled comparison of model size, although it does not make the architectures identical in computational cost, inductive bias, or effective learning capacity.
+Equal parameter counts provide a more controlled comparison of model size, but do not make the architectures identical in computational cost, inductive bias, or effective learning capacity.
 
 ## 📏 Evaluation Metrics
 
@@ -131,38 +134,47 @@ The project evaluates regression performance using:
 - **RMSE — Root Mean Squared Error:** penalizes large prediction errors more heavily.
 - **R² — Coefficient of Determination:** measures performance relative to a mean-based baseline; negative values indicate performance worse than that baseline on the evaluated sample.
 
-The evaluation is conducted separately for the full chronological test set and the extreme-pollution subset.
+Metrics are reported separately for the full chronological test set and the extreme-pollution subset.
 
 ## 🧠 Deep Learning Results
 
-The following table summarizes the recorded results from the current deep learning experiment.
+The following values are taken from the recorded model-comparison output in the current deep learning notebook.
 
-| Model | Overall MAE | Overall RMSE | Overall R² | Extreme MAE | Extreme RMSE | Extreme R² |
-|---|---:|---:|---:|---:|---:|---:|
-| MLP | 7.5443 | 17.0179 | 0.9771 | 62.6798 | 88.8446 | 0.9593 |
-| RNN | 26.7387 | 94.5771 | 0.2926 | 384.5475 | 573.4059 | -0.6933 |
-| GRU | 8.6067 | 52.6969 | 0.7804 | 163.2418 | 325.3639 | 0.4548 |
-| Transformer | 22.6433 | 120.1631 | -0.1419 | 556.9644 | 736.0073 | -1.7899 |
+| Model | Parameters | Overall MAE | Overall RMSE | Overall R² | Extreme MAE | Extreme RMSE | Extreme R² |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| MLP | 76,601 | 11.6993 | 50.1122 | 0.8014 | 208.2278 | 307.9689 | 0.5115 |
+| RNN | 76,601 | 21.6034 | 75.3754 | 0.5507 | 297.3423 | 436.7031 | 0.0178 |
+| GRU | 76,601 | 15.4666 | 54.1908 | 0.7678 | 194.6090 | 319.3998 | 0.4746 |
+| Transformer | 76,601 | 12.2016 | 49.9385 | 0.8028 | 196.4280 | 303.3882 | 0.5260 |
 
-*These are experiment-specific results, not a claim that the same ranking will hold for other datasets, splits, or configurations.*
+### Test-set composition
+
+- **Total test samples:** 168,432
+- **Extreme-pollution samples (`US_AQI >= 201`):** 4,324
+- **Extreme-pollution share of test set:** 2.57%
 
 ### Key Observations
 
-- The MLP achieved the strongest overall results in this experiment and the lowest errors among the four evaluated architectures.
-- The GRU achieved positive R² values on both the overall test set and the extreme-pollution subset, but its errors were higher than those of the MLP.
-- The RNN showed substantially higher errors during extreme-pollution observations and a negative extreme-subset R².
-- The Transformer recorded the highest extreme-subset errors and a negative R² on both the overall and extreme subsets.
-- The results demonstrate that architecture choice can substantially affect prediction behaviour under this experimental setup.
+- **Lowest overall MAE:** MLP, at **11.6993**.
+- **Best overall RMSE and overall R²:** Transformer, with RMSE **49.9385** and R² **0.8028**.
+- **Lowest extreme-pollution MAE:** GRU, at **194.6090**.
+- **Best extreme-pollution RMSE and R²:** Transformer, with RMSE **303.3882** and R² **0.5260**.
+- The RNN had the highest extreme-pollution MAE (**297.3423**) and a near-zero extreme-subset R² (**0.0178**).
+- The best-performing architecture depends on the metric and evaluation subset; overall performance alone does not fully describe performance during extreme pollution.
 
-**Important research distinction:** An extreme-subset error does not by itself prove that a model degrades relative to ordinary pollution conditions. A rigorous degradation analysis should compare the extreme subset with a clearly defined non-extreme subset and account for differences in target ranges and sample sizes.
+### Robustness Interpretation
+
+In the notebook's comparison of overall MAE with extreme-subset MAE, the GRU has the lowest extreme-to-overall MAE ratio, approximately **12.58×**. This is a descriptive comparison between different subsets of the test data, not a standalone proof of model robustness: the subsets have different target distributions and sample sizes. The extreme subset contains only 2.57% of the test observations, so these results should be interpreted with that imbalance in mind.
+
+These are experiment-specific results. They do not establish that the same model ranking will hold for other datasets, cities, temporal splits, or configurations.
 
 ## 🌫️ Why Extreme Pollution Matters
 
 Extreme pollution observations may be relatively uncommon, yet prediction errors during these episodes can be especially consequential.
 
-This research therefore considers more than average model performance. It asks whether models can generalize to unusually high pollution levels and whether their errors remain acceptable in the conditions that are the primary focus of the study.
+This research therefore considers more than average model performance. It asks whether models can predict unusually high pollution values and how their errors behave under the conditions that are the primary focus of the study.
 
-The objective is to encourage more careful evaluation of predictive systems intended for environmental monitoring and pollution-related decision support.
+The objective is to encourage careful evaluation of predictive systems intended for environmental monitoring and pollution-related decision support.
 
 ## 🛠️ Technology Stack
 
@@ -224,14 +236,16 @@ Open the notebooks in the `notebooks/` directory and execute them in the documen
 - Results depend on the dataset, preprocessing choices, feature selection, temporal split, and model configuration.
 - A chronological holdout evaluates later observations from the available data but does not automatically establish generalization to entirely unseen cities or future pollution regimes.
 - The extreme-pollution threshold is an operational research definition for this experiment and should be interpreted according to the target index and its applicable scale.
+- Extreme-pollution observations make up a small fraction of the test set, so subset metrics may be sensitive to the limited sample.
 - Equal parameter counts do not guarantee equal training cost or equivalent model capacity.
+- Comparing overall and extreme-subset metrics requires care because their target distributions and sample sizes differ.
 - Predictive performance alone does not establish causal relationships between pollutants, weather, and air quality.
 - These experiments are research results and should not be treated as a substitute for official air-quality monitoring or public-health guidance.
 
 ## 🔭 Future Work
 
-- Compare extreme-pollution performance with non-extreme observations using consistent metrics.
-- Investigate performance across cities, seasons, and pollution regimes.
+- Compare extreme-pollution performance with a clearly defined non-extreme subset using consistent metrics.
+- Investigate performance across cities, seasons, and individual pollution episodes.
 - Evaluate calibration, prediction intervals, and uncertainty during extreme events.
 - Test alternative temporal validation strategies and out-of-city generalization.
 - Compare additional baselines and conduct systematic hyperparameter tuning.
